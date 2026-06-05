@@ -1,0 +1,30 @@
+name: publish
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # for PyPI Trusted Publishing (OIDC)
+      contents: write   # for gh release
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libhdf4-dev
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -e .[all,dev] build twine
+      - name: Tests gate
+        run: pytest tests/ -v --tb=short
+      - name: Build wheel + sdist
+        run: python -m build
+      - name: twine check
+        run: twine check dist/*
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

@@ -1,0 +1,18 @@
+data/
+data_full/
+# Allow bundled sample data shipped in the wheel
+!src/spacescans/resources/data/
+output/
+output_modularized/
+cache/
+.claude/
+# internal brainstorming/planning docs (specs + plans)
+docs/superpowers/
+python-scripts/*.log
+.DS_Store
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+dist/
+build/

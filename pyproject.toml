@@ -1,0 +1,98 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spacescans-pipeline"
+version = "0.1.0"
+description = "Config-driven environmental exposure linkage pipeline (C3 boundary/grid weights + C4 patient TWA)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Regenstrief Institute"}]
+keywords = ["exposome", "geospatial", "ehr", "patient-exposure-linkage"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+]
+
+dependencies = [
+    "pydantic >= 2.0",
+    "pyyaml",
+    "pandas >= 2.0",
+    "numpy",
+    "duckdb >= 0.9",
+    "pyarrow",
+]
+
+[project.optional-dependencies]
+geo = [
+    "geopandas >= 0.14",
+    "rasterio >= 1.3",
+    "shapely >= 2.0",
+    "exactextract >= 0.2",
+]
+rda = ["pyreadr"]
+hdf4 = ["pyhdf"]
+nc = ["xarray", "netCDF4"]
+all = [
+    "geopandas >= 0.14",
+    "rasterio >= 1.3",
+    "shapely >= 2.0",
+    "exactextract >= 0.2",
+    "pyreadr",
+    "pyhdf",
+    "xarray",
+    "netCDF4",
+]
+dev = [
+    "pytest >= 7.0",
+    "pytest-xdist",
+    "ruff",
+]
+
+[project.scripts]
+spacescans = "spacescans.cli:main"
+
+[project.urls]
+Repository = "https://github.com/xuguang-ai/spacescans"
+Issues = "https://github.com/xuguang-ai/spacescans/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["spacescans*"]
+exclude = ["tests*", "__pycache__*"]
+
+[tool.setuptools.package-data]
+spacescans = [
+    "resources/configs/quickstart/*.yaml",
+    "resources/configs/templates/c3/*.yaml",
+    "resources/configs/templates/c4/*.yaml",
+    "resources/data/*.parquet",
+    "resources/data/*.shp",
+    "resources/data/*.shx",
+    "resources/data/*.dbf",
+    "resources/data/*.prj",
+    "resources/data/*.cpg",
+    "py.typed",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "--import-mode=importlib"
+markers = [
+    "geo: tests requiring [geo] extra",
+    "rda: tests requiring [rda] extra",
+    "hdf4: tests requiring [hdf4] extra",
+    "nc: tests requiring [nc] extra",
+    "extras: any test requiring optional extras",
+    "slow: tests > 5s",
+]

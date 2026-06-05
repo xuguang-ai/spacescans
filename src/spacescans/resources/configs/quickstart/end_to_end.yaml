@@ -1,0 +1,23 @@
+# src/spacescans/resources/configs/quickstart/end_to_end.yaml
+# Demonstrates a single C3 boundary_overlap_fast against bundled sample data.
+# All paths use ${SPACESCANS_QUICKSTART_DATA_DIR} which is set automatically by the quickstart command.
+name: quickstart_county
+linkage_pattern: boundary_overlap_fast
+geometry_type: polygon
+
+source:
+  file: ${SPACESCANS_QUICKSTART_DATA_DIR}/sample_counties.shp
+  join_col: GEOID10
+
+buffer:
+  patient_file: ${SPACESCANS_QUICKSTART_DATA_DIR}/sample_patients.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+  raster_res_m: 25
+
+engine:
+  backend: duckdb
+
+output:
+  path: ${SPACESCANS_OUTPUT_DIR}/quickstart_county_weights.parquet
+  format: parquet

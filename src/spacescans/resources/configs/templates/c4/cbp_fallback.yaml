@@ -1,0 +1,41 @@
+name: county_cbp
+linkage_pattern: cbp_fallback
+geometry_type: polygon
+
+source:
+  file: ${SPACESCANS_OUTPUT_DIR}/county_weights.parquet
+  join_col: GEOID10
+
+buffer:
+  patient_file: ${SPACESCANS_DATA_DIR}/patients/my_cohort.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+
+exposure:
+  file: ${SPACESCANS_DATA_DIR}/CBP/cbp_nationwide.Rda
+  join_col: fips
+  value_cols: [r_religious, r_civic, r_business]
+  year_col: year
+  zbp_file: ${SPACESCANS_OUTPUT_DIR}/zbp_result.parquet
+
+transforms:
+  - type: derive
+    target: exposure
+    registry_key: zfill_str
+    output_col: fips
+    params:
+      source_col: fips
+      width: 5
+
+time:
+  years: [2013, 2014, 2015, 2016, 2017, 2018, 2019]
+  temporal_resolution: yearly
+  temporal_mode: yearly
+
+engine:
+  backend: duckdb
+
+output:
+  path: ${SPACESCANS_OUTPUT_DIR}/cbp_result.parquet
+  format: parquet
+  label_path: ${SPACESCANS_OUTPUT_DIR}/label_cbp.parquet

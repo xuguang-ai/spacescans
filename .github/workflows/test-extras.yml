@@ -1,0 +1,51 @@
+name: test (extras)
+on:
+  push: {branches: [main]}
+
+jobs:
+  test-geo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -e .[geo,dev]
+      - run: pytest tests/ -v -m "geo" --tb=short
+
+  test-rda:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -e .[rda,dev]
+      - run: pytest tests/ -v -m "rda" --tb=short
+
+  test-hdf4:
+    runs-on: ubuntu-latest  # macOS HDF4 too painful for CI; documented only.
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libhdf4-dev
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -e .[hdf4,dev]
+      - run: pytest tests/ -v -m "hdf4" --tb=short
+
+  test-nc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -e .[nc,geo,dev]
+      - run: pytest tests/ -v -m "nc" --tb=short
+
+  test-all:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libhdf4-dev
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -e .[all,dev]
+      - run: pytest tests/ -v --tb=short

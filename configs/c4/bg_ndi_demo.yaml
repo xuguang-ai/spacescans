@@ -1,0 +1,33 @@
+name: bg_ndi_demo
+linkage_pattern: yearly_areal        # C4: yearly weighted aggregation
+geometry_type: polygon
+
+source:                              # C4: C3-produced BG weight table (demo)
+  file: output/python_v2/270m/BG_US/C3/buffer270mBG25m_demo100k.parquet
+  join_col: GEOID10
+
+buffer:
+  patient_file: data_full/demo_patients_conus_fast_100000.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+
+exposure:                            # C4: nationwide BG NDI 2012-2022
+  file: data_full/BG_NDI/C4/ndi_2012_2022_nationwide_BG.Rda
+  key: ndi
+  join_col: fips
+  value_cols:
+    - ndi
+  year_col: year
+
+time:
+  years: [2013, 2014, 2015, 2016, 2017, 2018, 2019]
+  temporal_resolution: yearly
+  temporal_mode: yearly
+
+engine:
+  backend: duckdb
+
+output:
+  path: output/python_v2/270m/BG_US/C4/ndi_demo100k.parquet
+  format: parquet
+  label_path: output/python_v2/270m/BG_US/C4/label_ndi_demo100k.parquet

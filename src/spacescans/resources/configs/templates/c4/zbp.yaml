@@ -1,0 +1,40 @@
+name: zcta5_zbp
+linkage_pattern: yearly_areal
+geometry_type: polygon
+
+source:
+  file: ${SPACESCANS_OUTPUT_DIR}/zcta5_weights.parquet
+  join_col: ZCTA5CE10
+
+buffer:
+  patient_file: ${SPACESCANS_DATA_DIR}/patients/my_cohort.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+
+exposure:
+  file: ${SPACESCANS_DATA_DIR}/CBP/zbp_nationwide.Rda
+  join_col: zip
+  value_cols: [r_religious, r_civic, r_business]
+  year_col: year
+
+transforms:
+  - type: derive
+    target: exposure
+    registry_key: zfill_str
+    output_col: zip
+    params:
+      source_col: zip
+      width: 5
+
+time:
+  years: [2013, 2014, 2015, 2016, 2017, 2018, 2019]
+  temporal_resolution: yearly
+  temporal_mode: yearly
+
+engine:
+  backend: duckdb
+
+output:
+  path: ${SPACESCANS_OUTPUT_DIR}/zbp_result.parquet
+  format: parquet
+  label_path: ${SPACESCANS_OUTPUT_DIR}/label_zbp.parquet

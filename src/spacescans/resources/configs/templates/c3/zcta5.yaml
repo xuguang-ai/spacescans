@@ -1,0 +1,20 @@
+name: zcta5_us
+linkage_pattern: boundary_overlap_fast
+geometry_type: polygon
+
+source:
+  file: ${SPACESCANS_DATA_DIR}/ZCTA5/tl_2010_us_zcta510/tl_2010_us_zcta510.shp
+  join_col: ZCTA5CE10
+
+buffer:
+  patient_file: ${SPACESCANS_DATA_DIR}/patients/my_cohort.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+  raster_res_m: 25
+
+engine:
+  backend: duckdb
+
+output:
+  path: ${SPACESCANS_OUTPUT_DIR}/zcta5_weights.parquet
+  format: parquet
