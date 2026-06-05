@@ -15,7 +15,7 @@ configs and a unified DuckDB engine.
 # Base install — yearly_areal / static_areal / cbp_fallback / faqsd
 pip install spacescans-pipeline
 
-# Add geospatial pipelines (boundary_overlap, grid_weights, proximity)
+# Add geospatial pipelines (boundary_overlap_fast, grid_weights, proximity)
 pip install 'spacescans-pipeline[geo]'
 
 # Add R / HDF4 / NetCDF readers
@@ -30,7 +30,7 @@ pip install 'spacescans-pipeline[all]'
 | Extra | Unlocks | Notes |
 |---|---|---|
 | (base) | `yearly_areal`, `static_areal`, `cbp_fallback`, `faqsd`, `precomputed_areal`, `precomputed_static` | pandas + duckdb only |
-| `[geo]` | `boundary_overlap`, `boundary_overlap_fast`, `grid_weights`, `gridded`, `*_proximity` | geopandas / rasterio / shapely / exactextract |
+| `[geo]` | `boundary_overlap_fast`, `grid_weights`, `gridded`, `*_proximity` | geopandas / rasterio / shapely / exactextract |
 | `[rda]` | any reader for `.Rda` files (BG_NDI / BG_WI / CBP / FARA / UCR) | pyreadr |
 | `[hdf4]` | TEMIS reader | requires system HDF4 library |
 | `[nc]` | ACAG multi-pollutant reader | xarray / netCDF4 |
@@ -48,7 +48,7 @@ The pipeline runs in two stages. **C3** builds geoid-level weight/exposure table
 
 | Pattern | What it does | Typical data |
 |---|---|---|
-| `boundary_overlap` / `boundary_overlap_fast` | Patient 270 m buffer × polygon area-overlap weights (`_fast` = per-tile bulk rasterize, 4–7× faster) | BG, County, Tract, ZCTA5 |
+| `boundary_overlap_fast` | Patient 270 m buffer × polygon area-overlap weights (per-tile bulk rasterize) | BG, County, Tract, ZCTA5 |
 | `grid_weights` | Patient buffer × raster cell coverage weights | ACAG, Noise, PRISM, TEMIS, VNL, MOD13Q1 |
 | `tiger_proximity` | Nearest road distance per (geoid, year) | TIGER roads |
 | `nhd_proximity` | Nearest blue-space distance per geoid | NHD |
