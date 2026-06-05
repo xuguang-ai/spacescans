@@ -1,73 +1,26 @@
-# spacescans-pipeline
+# spacescans
 
-Config-driven environmental-exposure linkage for EHR patient cohorts. The pipeline builds
-geoid-level weight/exposure tables (**C3**) from geospatial sources, then links them to
-patient address episodes (**C4**) as time/area-weighted exposures — all driven by YAML
-configs and a unified DuckDB engine.
+**Config-driven environmental-exposure linkage for EHR patient cohorts.**
 
-- **Distribution name:** `spacescans-pipeline`
-- **Import name:** `spacescans`
-- Light base install (pandas + DuckDB); geospatial / R / HDF4 / NetCDF features are optional extras.
+Link environmental exposures — air quality, greenness, noise, roads, neighborhood
+indices, and more — to patient address histories, defined entirely in YAML and
+computed on a fast DuckDB engine. Built for reproducible exposome research at scale.
 
-## Installation
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10--3.12-blue.svg)](https://www.python.org/)
+[![Website](https://img.shields.io/badge/website-spacescans.com-1f6feb.svg)](https://www.spacescans.com)
 
-```bash
-# Base install — yearly_areal / static_areal / cbp_fallback / faqsd
-pip install spacescans-pipeline
+🌐 **Website:** [www.spacescans.com](https://www.spacescans.com)
 
-# Add geospatial pipelines (boundary_overlap_fast, grid_weights, proximity)
-pip install 'spacescans-pipeline[geo]'
+---
 
-# Add R / HDF4 / NetCDF readers
-pip install 'spacescans-pipeline[rda,hdf4,nc]'
+## Why spacescans
 
-# Everything
-pip install 'spacescans-pipeline[all]'
-```
-
-### Optional extras
-
-| Extra | Unlocks | Notes |
-|---|---|---|
-| (base) | `yearly_areal`, `static_areal`, `cbp_fallback`, `faqsd`, `precomputed_areal`, `precomputed_static` | pandas + duckdb only |
-| `[geo]` | `boundary_overlap_fast`, `grid_weights`, `gridded`, `*_proximity` | geopandas / rasterio / shapely / exactextract |
-| `[rda]` | any reader for `.Rda` files (BG_NDI / BG_WI / CBP / FARA / UCR) | pyreadr |
-| `[hdf4]` | TEMIS reader | requires system HDF4 library |
-| `[nc]` | ACAG multi-pollutant reader | xarray / netCDF4 |
-| `[all]` | everything above | |
-
-**Note on native libraries:** `[hdf4]` requires the system HDF4 library
-(`apt install libhdf4-dev` / `brew install hdf4` / `conda install -c conda-forge hdf4`).
-`[geo]` works on most platforms via wheels; conda/mamba recommended for production.
-
-### Linkage patterns
-
-The pipeline runs in two stages. **C3** builds geoid-level weight/exposure tables from raw geospatial inputs (needs the `[geo]` extra). **C4** links those tables to patient episodes (base install; a few readers also need `[rda]`/`[hdf4]`/`[nc]`).
-
-#### C3 — weight / exposure building (`[geo]`)
-
-| Pattern | What it does | Typical data |
-|---|---|---|
-| `boundary_overlap_fast` | Patient 270 m buffer × polygon area-overlap weights (per-tile bulk rasterize) | BG, County, Tract, ZCTA5 |
-| `grid_weights` | Patient buffer × raster cell coverage weights | ACAG, Noise, PRISM, TEMIS, VNL, MOD13Q1 |
-| `tiger_proximity` | Nearest road distance per (geoid, year) | TIGER roads |
-| `nhd_proximity` | Nearest blue-space distance per geoid | NHD |
-
-#### C4 — patient linkage (base install)
-
-Pure table operations (DuckDB/pandas) that consume the C3 weight tables — no extra required. They differ along two axes: **how exposure varies over time** × **whether spatial aggregation is still needed**.
-
-| Pattern | Time dimension | Spatial | What it does | Typical data |
-|---|---|---|---|---|
-| `yearly_areal` | Yearly (2013–2019) | Area-weighted (uses C3 boundary weights) | Patient buffer × boundary area weights + residence-days per geoid → yearly "time × area" weighted mean | BG_NDI, UCR, ZBP |
-| `static_areal` | Time-invariant | Area-weighted | Exposure is a single static value; area-weighted by residence days only | BG_WI (walkability), Noise |
-| `cbp_fallback` | Yearly | Area-weighted | Business specialization of `yearly_areal`: patients use ZBP (ZIP-level) first; those missing ZBP fall back to county CBP, then concatenated | County/ZCTA5 business patterns |
-| `faqsd` (`faqsd_daily_areal`) | Daily | Area-weighted | Daily air quality (O3/PM2.5); patient episode × daily values with day-level overlap + area weighting | TRACT FAQSD |
-| `precomputed_areal` | Yearly | Precomputed (no spatial aggregation) | Exposure is already a `geoid × year` table; time-weighted by residence days directly (no rasterization/overlap) | TIGER road distance |
-| `precomputed_static` | Time-invariant | Precomputed | Exposure is already a `geoid`-level static table; weighted average by episode days | NHD blue-space distance |
-
-> `*_areal` vs `precomputed_*`: `areal` re-aggregates using the C3 boundary weights; `precomputed_*` exposures are already computed at the geoid level (e.g. TIGER/NHD distances), skipping the spatial step.
-> Some C4 patterns need extras beyond base: `gridded` (`[geo]`), `acag_multi` (`[nc]`+`[geo]`), `fara_tract` (`[rda]`).
+- **Config-driven, not code-driven** — describe each linkage in a YAML file; one engine runs them all.
+- **Reusable two-stage design** — build geoid-level weight/exposure tables once (**C3**), then link them to patient episodes as time- and area-weighted exposures (**C4**).
+- **Batteries-included exposure readers** — air quality (FAQSD, ACAG, TEMIS), greenness (MODIS NDVI), light & noise (VNL, noise), road & blue-space proximity (TIGER, NHD), neighborhood indices (NDI, walkability, CBP/ZBP), and more.
+- **Light core, optional extras** — base install is just pandas + DuckDB; geospatial / R / HDF4 / NetCDF support is opt-in.
+- **Fast** — DuckDB aggregation engine with per-tile bulk rasterization.
 
 ## Quickstart
 
@@ -76,8 +29,86 @@ pip install 'spacescans-pipeline[geo]'
 spacescans quickstart --output-dir ./demo-out
 ```
 
-This runs an end-to-end pipeline on bundled sample data (~10 synthetic
-patients × 3 Delaware counties) and writes a Parquet result to `./demo-out/`.
+This runs a full **C3 → C4** pipeline on bundled **synthetic** sample data
+(~10 fake patients inside a Delaware-shaped bounding box) and writes a Parquet
+result to `./demo-out/`. No real or licensed data required — try it in seconds.
+
+## Installation
+
+- **Install name:** `spacescans-pipeline` · **import as:** `spacescans`
+- **Requires:** Python 3.10+
+
+```bash
+pip install spacescans-pipeline             # core: pandas + DuckDB
+pip install 'spacescans-pipeline[geo]'      # + geospatial pipelines
+pip install 'spacescans-pipeline[all]'      # everything
+```
+
+```bash
+# Install the latest from source (before the first PyPI release)
+pip install "spacescans-pipeline[geo] @ git+https://github.com/xuguang-ai/spacescans.git"
+```
+
+<details>
+<summary><b>Optional extras</b> — what each unlocks (click to expand)</summary>
+
+| Extra | Unlocks | Requires |
+| --- | --- | --- |
+| (base) | `yearly_areal`, `static_areal`, `cbp_fallback`, `faqsd`, `precomputed_areal`, `precomputed_static` | pandas + duckdb only |
+| `[geo]` | `boundary_overlap_fast`, `grid_weights`, `gridded`, `*_proximity` | geopandas / rasterio / shapely / exactextract |
+| `[rda]` | any reader for `.Rda` files (BG_NDI / BG_WI / CBP / FARA / UCR) | pyreadr |
+| `[hdf4]` | TEMIS reader | system HDF4 library |
+| `[nc]` | ACAG multi-pollutant reader | xarray / netCDF4 |
+| `[all]` | everything above | — |
+
+**Native libraries:** `[hdf4]` needs the system HDF4 library
+(`apt install libhdf4-dev` / `brew install hdf4` / `conda install -c conda-forge hdf4`).
+`[geo]` works on most platforms via wheels; conda/mamba is recommended for production.
+
+</details>
+
+## How it works
+
+The pipeline runs in two stages, both driven by YAML configs and the same DuckDB engine:
+
+1. **C3 — build weights/exposures** (needs `[geo]`): turn raw geospatial inputs into reusable
+   `geoid`-level weight or exposure tables.
+2. **C4 — link to patients** (base install): consume the C3 tables and attach exposures to
+   patient address episodes as time- and area-weighted values.
+
+Because C3 outputs are reusable, you build a weight table once and reuse it across many C4 linkages.
+
+## Linkage patterns
+
+### C3 — weight / exposure building (`[geo]`)
+
+| Pattern | What it does | Typical data |
+| --- | --- | --- |
+| `boundary_overlap_fast` | Patient 270 m buffer × polygon area-overlap weights (per-tile bulk rasterize) | BG, County, Tract, ZCTA5 |
+| `grid_weights` | Patient buffer × raster cell coverage weights | ACAG, Noise, PRISM, TEMIS, VNL, MOD13Q1 |
+| `tiger_proximity` | Nearest road distance per (geoid, year) | TIGER roads |
+| `nhd_proximity` | Nearest blue-space distance per geoid | NHD |
+
+### C4 — patient linkage (base install)
+
+Pure table operations (DuckDB/pandas) over the C3 weight tables. Patterns differ along two axes:
+**how exposure varies over time** × **whether spatial aggregation is still needed**.
+
+| Pattern | Time | Spatial | What it does | Typical data |
+| --- | --- | --- | --- | --- |
+| `yearly_areal` | Yearly | Area-weighted | Boundary area weights + residence-days per geoid → yearly time × area weighted mean | BG_NDI, UCR, ZBP |
+| `static_areal` | Static | Area-weighted | Single static value, area-weighted by residence days | BG_WI (walkability), Noise |
+| `cbp_fallback` | Yearly | Area-weighted | Like `yearly_areal`, but ZBP (ZIP-level) first, falling back to county CBP | County/ZCTA5 business patterns |
+| `faqsd` | Daily | Area-weighted | Daily air quality (O₃/PM2.5); episode × daily values with day-level overlap | TRACT FAQSD |
+| `precomputed_areal` | Yearly | Precomputed | Already a `geoid × year` table; time-weighted by residence days | TIGER road distance |
+| `precomputed_static` | Static | Precomputed | Already a `geoid`-level table; weighted average by episode days | NHD blue-space distance |
+
+> **`*_areal` vs `precomputed_*`:** `*_areal` re-aggregates using the C3 boundary weights;
+> `precomputed_*` exposures are already at the geoid level (e.g. TIGER/NHD distances), so the
+> spatial step is skipped.
+>
+> A few C4 patterns need extras beyond base: `gridded` (`[geo]`), `acag_multi` (`[nc]`+`[geo]`),
+> `fara_tract` (`[rda]`).
 
 ## Running on your own data
 
@@ -85,18 +116,22 @@ patients × 3 Delaware counties) and writes a Parquet result to `./demo-out/`.
 export SPACESCANS_DATA_DIR=/path/to/exposome-data
 export SPACESCANS_OUTPUT_DIR=/path/to/results
 
-# Edit ./configs/c3/county.yaml etc. (paths use ${SPACESCANS_DATA_DIR}/...)
+# Scaffold editable configs, then point their paths at ${SPACESCANS_DATA_DIR}/...
+spacescans init-config
 
 # Run the pipelines in dependency order
 spacescans run ./configs/c3/county.yaml
 spacescans run ./configs/c3/zcta5.yaml
-spacescans run ./configs/c4/zbp.yaml          # depends on C3 zcta5
-spacescans run ./configs/c4/cbp_fallback.yaml # depends on C3 county + C4 zbp
+spacescans run ./configs/c4/zbp.yaml            # depends on C3 zcta5
+spacescans run ./configs/c4/cbp_fallback.yaml   # depends on C3 county + C4 zbp
 ```
 
-## Package structure
+Paths resolve in three tiers: **CLI flag > `$SPACESCANS_DATA_DIR` > YAML `base_dir:`**,
+with `${SPACESCANS_DATA_DIR}` expansion inside YAML paths.
 
-```
+## Project layout
+
+```text
 src/spacescans/
 ├── cli/                 run / quickstart / init-config
 ├── config_resolution.py 3-tier path resolution (CLI > env > YAML) + ${VAR} expansion
@@ -111,19 +146,18 @@ src/spacescans/
 └── resources/           bundled sample data + template configs
 ```
 
-The package is self-contained: `import spacescans` pulls in only base dependencies;
-optional readers/patterns raise a friendly `MissingExtraError` telling you which
-`pip install 'spacescans-pipeline[...]'` to run.
+`import spacescans` pulls in only base dependencies; optional readers/patterns raise a
+friendly `MissingExtraError` telling you exactly which `pip install 'spacescans-pipeline[...]'` to run.
 
 ## Development
 
 ```bash
 pip install -e '.[all,dev]'
-pytest                  # full suite (base + extras present in the env)
+pytest                  # full suite (base + any extras present in the env)
 pytest -m "not extras"  # base-only tests
 pytest -m geo           # geo-extra tests
 ```
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). Learn more at [www.spacescans.com](https://www.spacescans.com).
