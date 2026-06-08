@@ -62,8 +62,8 @@ dev = [
 spacescans = "spacescans.cli:main"
 
 [project.urls]
-Repository = "https://github.com/xuguang-ai/spacescans"
-Issues = "https://github.com/xuguang-ai/spacescans/issues"
+Repository = "https://github.com/IU-Ultraman/spacescans"
+Issues = "https://github.com/IU-Ultraman/spacescans/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

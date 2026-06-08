@@ -46,7 +46,7 @@ pip install 'spacescans-pipeline[all]'      # everything
 
 ```bash
 # Install the latest from source (before the first PyPI release)
-pip install "spacescans-pipeline[geo] @ git+https://github.com/xuguang-ai/spacescans.git"
+pip install "spacescans-pipeline[geo] @ git+https://github.com/IU-Ultraman/spacescans.git"
 ```
 
 <details>
