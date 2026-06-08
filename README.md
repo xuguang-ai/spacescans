@@ -6,7 +6,6 @@ Link environmental exposures — air quality, greenness, noise, roads, neighborh
 indices, and more — to patient address histories, defined entirely in YAML and
 computed on a fast DuckDB engine. Built for reproducible exposome research at scale.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10--3.12-blue.svg)](https://www.python.org/)
 [![Website](https://img.shields.io/badge/website-spacescans.com-1f6feb.svg)](https://www.spacescans.com)
 
@@ -158,6 +157,6 @@ pytest -m "not extras"  # base-only tests
 pytest -m geo           # geo-extra tests
 ```
 
-## License
+---
 
-MIT — see [LICENSE](LICENSE). Learn more at [www.spacescans.com](https://www.spacescans.com).
+Learn more at [www.spacescans.com](https://www.spacescans.com).
